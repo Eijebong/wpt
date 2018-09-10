@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<meta http-equiv="Content-Security-Policy" content="trusted-types">
+<body>
+<script type="module">
+
+import {TrustedTypeConfig} from '../src/data/trustedtypeconfig.js';
+import {TrustedTypesEnforcer} from '../src/enforcer.js';
+import {trustedTypesBuilderTestOnly} from "../src/trustedtypes.js";
+
+let TEST_HTML = '<b>html</b>';
+
+let TEST_URL = 'http://example.com/script';
+
+let ENFORCING_CONFIG = new TrustedTypeConfig(
+    /* isLoggingEnabled */ false,
+    /* isTrustedTypesEnforcer enforcementEnabled */ true,
+    /* fallbackPolicy */ null,
+    /* allowedPolicyNames */ ['*'],
+    /* allowHttpUrls */ false,
+    /* cspString */ 'script-src https:; trusted-types *'
+    );
+
+let enforcer;
+
+function beforeEach() {
+  enforcer = new TrustedTypesEnforcer(ENFORCING_CONFIG);
+  enforcer.install();
+}
+
+function afterEach() {
+  enforcer.uninstall();
+}
+
+beforeEach();
+test(t => {
+  let el = document.createElement('a');
+
+  assert_throws(new TypeError(), _ => {
+    el.setAttribute('onclick', 'A string');
+  });
+
+  assert_equals(el.onclick, null);
+}, 'TrustedTypesEnforcer enforcement disables string assignments on inline event handlers via setAttribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('section');
+
+  assert_throws(new TypeError(), _ => {
+    el.setAttribute('onclick', 'A string');
+  });
+
+  assert_equals(el.onclick, null);
+}, 'TrustedTypesEnforcer enforcement disables string assignments on inert element inline event handlers via setAttribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('script');
+
+  assert_throws(new TypeError(), _ => {
+    el.innerText = 'A string';
+  });
+
+  assert_equals(el.innerText, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on HTMLScriptElement.innerText.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('script');
+
+  assert_throws(new TypeError(), _ => {
+    el.text = 'A string';
+  });
+
+  assert_equals(el.text, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on HTMLScriptElement.text.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('script');
+
+  assert_throws(new TypeError(), _ => {
+    el.textContent = 'A string';
+  });
+
+  assert_equals(el.textContent, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on HTMLScriptElement.textContent.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('iframe');
+
+  assert_throws(new TypeError(), _ => {
+    el.setAttribute('src', TEST_URL);
+  });
+
+  assert_equals(el.src, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on Element.prototype.setAttribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('iframe');
+
+  assert_throws(new TypeError(), _ => {
+    el.setAttributeNS('http://www.w3.org/1999/xhtml', 'src', TEST_URL);
+  });
+
+  assert_equals(el.getAttributeNS('http://www.w3.org/1999/xhtml', 'src'), null);
+}, 'TrustedTypesEnforcer enforcement disables string assignments on Element.prototype.setAttributeNS.');
+afterEach();
+
+// TODO: fix #47
+// eslint-disable-next-line jasmine/no-disabled-tests
+beforeEach();
+test(t => {
+//TODO: How to test xit?
+//xit('TrustedTypesEnforcer enforcement disables string assignments on copy attribute crossing types', function() {
+  let div = document.createElement('div');
+  let img = document.createElement('img');
+
+  div.setAttribute('src', TEST_URL);
+  let attr = div.getAttributeNode('src');
+  div.removeAttributeNode(attr);
+
+  assert_throws(new TypeError(), _ => {
+    img.setAttributeNode(attr);
+  });
+
+  assert_equals(img.src, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on copy attribute crossing types.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let div = document.createElement('div');
+  let span = document.createElement('span');
+
+  div.setAttribute('src', TEST_URL);
+  let attr = div.getAttributeNode('src');
+  div.removeAttributeNode(attr);
+  span.setAttributeNode(attr);
+
+  assert_equals(span.getAttribute('src'), TEST_URL);
+}, 'TrustedTypesEnforcer enforcement disables string assignments on copy innocuous attribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('iframe');
+
+  assert_throws(new TypeError(), _ => {
+    el.setAttribute('SrC', TEST_URL);
+  });
+
+  assert_equals(el.src, '');
+}, 'TrustedTypesEnforcer enforcement disables string assignments on non-lowercase Element.prototype.setAttribute.');
+afterEach();
+</script>

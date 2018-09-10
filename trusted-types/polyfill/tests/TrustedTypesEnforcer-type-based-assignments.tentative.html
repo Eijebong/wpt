@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<meta http-equiv="Content-Security-Policy" content="trusted-types">
+<body>
+<script type="module">
+
+import {TrustedTypeConfig} from '../src/data/trustedtypeconfig.js';
+import {TrustedTypesEnforcer} from '../src/enforcer.js';
+import {trustedTypesBuilderTestOnly} from "../src/trustedtypes.js";
+
+let TEST_HTML = '<b>html</b>';
+
+let TEST_URL = 'http://example.com/script';
+
+let EVIL_URL = 'http://evil.example.com/script';
+
+const noopPolicy = {
+        createHTML: (s) => s,
+        createScriptURL: (s) => s,
+        createURL: (s) => s,
+        createScript: (s) => s,
+};
+
+let ENFORCING_CONFIG = new TrustedTypeConfig(
+    /* isLoggingEnabled */ false,
+    /* isTrustedTypesEnforcer enforcementEnabled */ true,
+    /* fallbackPolicy */ null,
+    /* allowedPolicyNames */ ['*'],
+    /* allowHttpUrls */ false,
+    /* cspString */ 'script-src https:; trusted-types *'
+    );
+
+let enforcer;
+let policy;
+
+function beforeEach() {
+  enforcer = new TrustedTypesEnforcer(ENFORCING_CONFIG);
+  enforcer.install();
+  policy = TrustedTypes.createPolicy(Math.random(), noopPolicy, true);
+}
+
+function afterEach() {
+  enforcer.uninstall();
+}
+
+beforeEach();
+test(t => {
+  let el = document.createElement('a');
+  //const alert = spyOn(window, 'alert');
+
+  //TODO: How to test?
+  //expect(function() {
+    el.setAttribute('onclick', policy.createScript('window.alert()'));
+  //}).not.toThrow();
+
+  el.onclick();
+
+  //TODO: How to test?
+  //expect(alert).toHaveBeenCalledWith();
+}, 'TrustedTypesEnforcer enforcement allows type-based assignments on inline event handlers via setAttribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('script');
+
+  el.innerText = policy.createScript('A string');
+
+  assert_equals(el.innerText, 'A string');
+}, 'TrustedTypesEnforcer enforcement allows type-based assignments on HTMLScriptElement.innerText.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('iframe');
+
+  el.setAttribute('src', policy.createURL(TEST_URL));
+
+  assert_equals(el.src, TEST_URL);
+}, 'TrustedTypesEnforcer enforcement allows type-based assignments on Element.prototype.setAttribute.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('img');
+
+  el.setAttributeNS('http://www.w3.org/1999/xhtml', 'src', policy.createURL(TEST_URL));
+
+  assert_equals(el.getAttributeNS('http://www.w3.org/1999/xhtml', 'src'), TEST_URL);
+  assert_equals(el.getAttribute('src'), TEST_URL);
+}, 'TrustedTypesEnforcer enforcement allows type-based assignments on Element.prototype.setAttributeNS.');
+afterEach();
+</script>

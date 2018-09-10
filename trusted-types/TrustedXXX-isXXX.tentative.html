@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<meta http-equiv="Content-Security-Policy" content="trusted-types">
+<body>
+<script>
+
+const noopPolicy = {
+  'createHTML': (s) => s,
+  'createScriptURL': (s) => s,
+  'createURL': (s) => s,
+  'createScript': (s) => s,
+};
+
+test(t => {
+  const p = TrustedTypes.createPolicy('foo', noopPolicy);
+  let html = p.createHTML('test');
+
+  assert_true(TrustedTypes.isHTML(html));
+  let html2 = Object.create(html);
+
+  // instanceof can pass, but we rely on isHTML
+  assert_true(html2 instanceof TrustedTypes.TrustedHTML);
+  assert_false(TrustedTypes.isHTML(html2));
+
+  let html3 = Object.assign({}, html, {toString: () => 'fake'});
+
+  assert_false(TrustedTypes.isHTML(html3));
+}, 'TrustedXXX.isXXX methods require the object to be created via policy.');
+
+test(test => {
+  assert_throws(new TypeError(), _ => {
+    TrustedTypes.isHTML = () => true;
+  });
+
+  assert_false(TrustedTypes.isHTML({}));
+}, 'TrustedXXX.isXXX methods cannot be redefined.');
+</script>

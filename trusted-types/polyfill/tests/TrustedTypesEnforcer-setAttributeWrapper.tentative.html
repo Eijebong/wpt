@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<meta http-equiv="Content-Security-Policy" content="trusted-types">
+<body>
+<script type="module">
+
+import {TrustedTypeConfig} from '../src/data/trustedtypeconfig.js';
+import {TrustedTypesEnforcer} from '../src/enforcer.js';
+import {trustedTypesBuilderTestOnly} from "../src/trustedtypes.js";
+
+let ENFORCING_CONFIG = new TrustedTypeConfig(
+    /* isLoggingEnabled */ false,
+    /* isEnforcementEnabled */ true,
+    /* fallbackPolicy */ null,
+    /* allowedPolicyNames */ ['*'],
+    /* allowHttpUrls */ false,
+    /* cspString */ 'script-src https:; trusted-types *'
+    );
+
+let enforcer;
+
+function beforeEach() {
+  enforcer = new TrustedTypesEnforcer(ENFORCING_CONFIG);
+  enforcer.install();
+}
+
+function afterEach() {
+  enforcer.uninstall();
+}
+
+beforeEach();
+test(t => {
+  let el = document.createElement('link');
+  el.setAttribute('rel', 'stylesheet');
+
+  assert_equals(el.getAttribute('rel'), 'stylesheet');
+  assert_equals(el.rel, 'stylesheet');
+}, 'TrustedTypesEnforcer setAttribute wrapper passes through inert attributes.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('section');
+  el.setAttribute('id', 'foo');
+
+  assert_equals(el.getAttribute('id'), 'foo');
+  assert_equals(el.id, 'foo');
+}, 'TrustedTypesEnforcer setAttribute wrapper passes through inert elements.');
+afterEach();
+
+beforeEach();
+test(t => {
+  let el = document.createElement('section');
+  el.setAttribute('ontotallyfakeevent', 'foo');
+
+  assert_equals(el.getAttribute('ontotallyfakeevent'), 'foo');
+}, 'TrustedTypesEnforcer setAttribute wrapper passes through on attributes if the event is unknown.');
+afterEach();
+</script>
