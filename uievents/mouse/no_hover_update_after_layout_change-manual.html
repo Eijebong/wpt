@@ -43,6 +43,7 @@
             </ol>
         </h4>
         <script type="text/javascript">
+            internals.runtimeFlags.noHoverAfterLayoutChangeEnabled = true;
             var testMouseOver = async_test('Tests that the mouseover event is fired and the element has a hover effect when the element underneath the mouse cursor is changed.');
 
             var eventList = [];
@@ -60,7 +61,8 @@
 
             function checkEventSequence() {
                 var result = eventList.join();
-                assert_true(result == 'mouseover,mouseenter');
+                assert_true(result == '');
+                assert_true(internals.runtimeFlags.noHoverAfterLayoutChangeEnabled)
                 testMouseOver.done();
             }
 
