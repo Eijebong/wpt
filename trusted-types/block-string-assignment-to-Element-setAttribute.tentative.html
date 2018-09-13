@@ -61,6 +61,15 @@
     }, c[0] + "." + c[1] + " accepts only TrustedHTML");
   });
 
+  // After default policy creation string and null assignments don't throw
+  HTMLTestCases.forEach(c => {
+    test(t => {
+      let p = window.TrustedTypes.createPolicy("default", { createHTML: createHTMLJS }, true);
+      assert_element_accepts_trusted_type(c[0], c[1], INPUTS.HTML, RESULTS.HTML);
+      assert_element_accepts_trusted_type(c[0], c[1], null, "null");
+    }, c[0] + "." + c[1] + " accepts string and null after default policy was created.");
+  });
+
   // Other attributes can be assigned with TrustedTypes or strings or null values
   test(t => {
     assert_element_accepts_trusted_url_explicit_set(window, 'arel', t, 'a', 'rel', RESULTS.URL);

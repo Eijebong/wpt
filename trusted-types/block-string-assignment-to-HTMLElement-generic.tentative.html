@@ -64,4 +64,16 @@
       assert_throws_no_trusted_type(c[0], c[1], null);
     }, c[0] + "." + c[1] + " accepts only TrustedHTML");
   });
+
+  // After default policy creation string and null assignments don't throw
+  test(t => {
+    let p = window.TrustedTypes.createPolicy("default", { createHTML: createHTMLJS }, true);
+    assert_element_accepts_trusted_type('div', 'innerHTML', INPUTS.HTML, RESULTS.HTML);
+    assert_element_accepts_trusted_type('div', 'innerHTML', null, "");
+  }, "div.innerHTML accepts string and null after default policy was created");
+
+  test(t => {
+    assert_element_accepts_trusted_type('iframe', 'srcdoc', INPUTS.HTML, RESULTS.HTML);
+    assert_element_accepts_trusted_type('iframe', 'srcdoc', null, "null");
+  }, "iframe.srcdoc accepts string and null after default policy was created");
 </script>
